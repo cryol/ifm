@@ -1,15 +1,11 @@
-<form id="formUploadFile">
+<form id="formUploadDir">
 <div class="modal-body">
 	<fieldset>
 		<div class="form-group">
 			<div class="custom-file">
 				<label class="custom-file-label" for="fileselect">{{i18n.upload_file}}</label>
-				<input class="custom-file-input" type="file" name="files" id="fileselect" multiple>
+				<input class="custom-file-input" type="file" name="files" id="fileselect"  webkitdirectory mozdirectory />
 			</div>
-		</div>
-		<div class="form-group">
-			<label for="filename">{{i18n.filename_new}}</label>
-			<input class="form-control" type="text" name="newfilename" id="filename">
 		</div>
 	</fieldset>
 </div>
