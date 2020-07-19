@@ -964,32 +964,6 @@ function IFM(params) {
 			}
 		});
 	};
-	this.showUploadDirDialog = function() {
-		self.showModal( Mustache.render( self.templates.uploaddir, { i18n: self.i18n } ) );
-		var form = document.forms.formUploadDir;
-		form.addEventListener( 'click', function( e ) {
-			if( e.target.id == 'buttonUpload' ) {
-				e.preventDefault();
-				var files = Array.prototype.slice.call( form.elements.files.files );
-				if( files.length > 1 )
-					files.forEach( function( file ) {
-						self.uploadFile( file );
-					});
-				else
-					self.uploadFile( files[0], form.elements.newfilename.value );
-				self.hideModal();
-			} else if( e.target.id == 'buttonCancel' ) {
-				e.preventDefault();
-				self.hideModal();
-			}
-		});
-		// var iptEls = document.querySelectorAll('input');
-		// [].forEach.call(inps, function(iptEl) {
-		//     iptEl.onchange = function(e) {
-		//         console.log(this.files);
-		//     };
-		// });
-	};
 
 	/**
 	 * Uploads a file
@@ -1416,20 +1390,19 @@ function IFM(params) {
 		if( ! document.querySelector( "footer" ) ) {
 			var newFooter = self.getNodeFromString( Mustache.render( self.templates.footer, { i18n: self.i18n } ) );
 			newFooter.addEventListener( 'click', function( e ) {
-				if( e.target.name == 'showAll' ) {
-					if( newFooter.style.maxHeight == '80%' ) {
-						newFooter.style.maxHeight = '6em';
-						newFooter.style.overflow = 'hidden';
-						newFooter.hidden = true;
+				if( e.target.name == 'showAll' || e.target.parentElement.name == "showAll" ) {
+					wq = newFooter.children.wq_container.children[0].children.waitqueue;
+					if( wq.style.maxHeight == '70vh' ) {
+						wq.style.maxHeight = '6rem';
+						wq.style.overflow = 'hidden';
 					} else {
-						newFooter.style.maxHeight = '80%';
-						newFooter.style.overflow = 'scroll';
-						newFooter.hidden = false;
+						wq.style.maxHeight = '70vh';
+						wq.style.overflow = 'auto';
 					}
 				}
 			});
 			document.body.appendChild( newFooter );
-			document.body.style.paddingBottom = '6em';
+			document.body.style.paddingBottom = '9rem';
 		}
 		task.id = "wq-"+task.id;
 		task.type = task.type || "info";
@@ -1870,8 +1843,6 @@ function IFM(params) {
 			document.getElementById( 'createDir' ).onclick = function() { self.showCreateDirDialog(); };
 		if( self.config.upload )
 			document.getElementById( 'upload' ).onclick = function() { self.showUploadFileDialog(); };
-		if( self.config.upload )
-			document.getElementById( 'uploadDir' ).onclick = function() { self.showUploadDirDialog(); };
 		document.getElementById( 'currentDir' ).onkeypress = function( e ) {
 			if( e.keyCode == 13 ) {
 				e.preventDefault();

@@ -24,7 +24,7 @@ class IFM {
 		"timezone" => "",
 		"forbiddenChars" => array(),
 		"dateLocale" => "en-US",
-		"language" => "@@@vars:defaultlanguage@@@",
+		"language" => "@@@vars:default_lang@@@",
 		"selfoverwrite" => 0,
 
 		// api controls
@@ -38,7 +38,6 @@ class IFM {
 		"download" => 1,
 		"extract" => 1,
 		"upload" => 1,
-		"uploaddir" => 1,
 		"remoteupload" => 1,
 		"rename" => 1,
 		"zipnload" => 1,
@@ -91,7 +90,6 @@ class IFM {
 		$this->config['download'] =  getenv('IFM_API_DOWNLOAD') !== false ? intval( getenv('IFM_API_DOWNLOAD') ) : $this->config['download'] ;
 		$this->config['extract'] =  getenv('IFM_API_EXTRACT') !== false ? intval( getenv('IFM_API_EXTRACT') ) : $this->config['extract'] ;
 		$this->config['upload'] =  getenv('IFM_API_UPLOAD') !== false ? intval( getenv('IFM_API_UPLOAD') ) : $this->config['upload'] ;
-		$this->config['uploaddir'] =  getenv('IFM_API_UPLOAD_DIR') !== false ? intval( getenv('IFM_API_UPLOAD_DIR') ) : $this->config['uploaddir'] ;
 		$this->config['remoteupload'] =  getenv('IFM_API_REMOTEUPLOAD') !== false ? intval( getenv('IFM_API_REMOTEUPLOAD') ) : $this->config['remoteupload'] ;
 		$this->config['rename'] =  getenv('IFM_API_RENAME') !== false ? intval( getenv('IFM_API_RENAME') ) : $this->config['rename'] ;
 		$this->config['zipnload'] =  getenv('IFM_API_ZIPNLOAD') !== false ? intval( getenv('IFM_API_ZIPNLOAD') ) : $this->config['zipnload'] ;
@@ -179,9 +177,6 @@ f00bar;
 		$templates['uploadfile'] = <<<'f00bar'
 @@@file:src/templates/modal.uploadfile.html@@@
 f00bar;
-		$templates['uploaddir'] = <<<'f00bar'
-@@@file:src/templates/modal.uploaddir.html@@@
-f00bar;
 		$this->templates = $templates;
 
 		$i18n = array();
@@ -223,7 +218,7 @@ IFM_ASSETS
 				<title>IFM - improved file manager</title>
 				<meta charset="utf-8">
 				<meta http-equiv="X-UA-Compatible" content="IE=edge">
-				<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">';
+				<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, shrink-to-fit=no">';
 		$this->getCSS();
 		print '</head><body>';
 	}
@@ -275,7 +270,6 @@ IFM_ASSETS
 					case "download": $this->downloadFile( $_REQUEST ); break;
 					case "extract": $this->extractFile( $_REQUEST ); break;
 					case "upload": $this->uploadFile( $_REQUEST ); break;
-					case "uploadDir": $this->uploadDir( $_REQUEST ); break;
 					case "copyMove": $this->copyMove( $_REQUEST ); break;
 					case "changePermissions": $this->changePermissions( $_REQUEST ); break;
 					case "zipnload": $this->zipnload( $_REQUEST); break;
@@ -978,7 +972,7 @@ IFM_ASSETS
 				$item = utf8_encode( $item );
 	}
 
-	public function checkAuth() {
+	function checkAuth() {
 		if( $this->config['auth'] == 0 )
 			return true;
 
@@ -1000,16 +994,13 @@ IFM_ASSETS
 
 		if( ! isset( $_SESSION['ifmauth'] ) || $_SESSION['ifmauth'] !== true ) {
 			$login_failed = false;
-			$login_message = "";
 			if( isset( $_POST["inputLogin"] ) && isset( $_POST["inputPassword"] ) ) {
-				$state = $this->checkCredentials( $_POST["inputLogin"], $_POST["inputPassword"] );
-				if($state['status']) {
+				if( $this->checkCredentials( $_POST["inputLogin"], $_POST["inputPassword"] ) ) {
 					$_SESSION['ifmauth'] = true;
 				}
 				else {
 					$_SESSION['ifmauth'] = false;
 					$login_failed = true;
-					$login_message = $state['message'];
 				}
 			}
 
@@ -1022,7 +1013,7 @@ IFM_ASSETS
 					else
 						$this->jsonResponse( array( "status"=>"ERROR", "message"=>"not authenticated" ) );
 				} else {
-					$this->loginForm($login_failed, $login_message);
+					$this->loginForm($login_failed);
 				}
 				return false;
 			}
@@ -1032,7 +1023,6 @@ IFM_ASSETS
 	}
 
 	private function checkCredentials( $user, $pass ) {
-		$authenticated = array("status" => false, "message" =>  "");
 		list( $src, $srcopt ) = explode( ";", $this->config['auth_source'], 2 );
 		switch( $src ) {
 			case "inline":
@@ -1045,11 +1035,12 @@ IFM_ASSETS
 					$htpasswd = new Htpasswd( $srcopt );
 					return $htpasswd->verify( $user, $pass );
 				} else {
-					// trigger_error( "IFM: Fatal: Credential file does not exist or is not readable" );
-					return $authenticated;
+					trigger_error( "IFM: Fatal: Credential file does not exist or is not readable" );
+					return false;
 				}
 				break;
 			case "ldap":
+				$authenticated = false;
 				$ldapopts = explode( ";", $srcopt );
 				if( count( $ldapopts ) === 3 ) {
 					list( $ldap_server, $rootdn, $ufilter ) = explode( ";", $srcopt );
@@ -1059,8 +1050,8 @@ IFM_ASSETS
 				}
 				$u = "uid=" . $user . "," . $rootdn;
 				if( ! $ds = ldap_connect( $ldap_server ) ) {
-					$authenticated['status'] = false;
-					$authenticated['message'] = "Could not reach the ldap server.";
+					trigger_error( "Could not reach the ldap server.", E_USER_ERROR );
+					return false;
 				}
 				ldap_set_option( $ds, LDAP_OPT_PROTOCOL_VERSION, 3 );
 				if( $ds ) {
@@ -1068,29 +1059,28 @@ IFM_ASSETS
 					if( $ldbind ) {
 						if( $ufilter ) {
 							if( ldap_count_entries( $ds, ldap_search( $ds, $rootdn, $ufilter ) ) > 0 ){
-								$authenticated['status'] = true;
+								$authenticated = true;
 							} else {
-								$authenticated['status'] = false;
-								$authenticated['message'] = "User not allowed.";
+								trigger_error( "User not allowed.", E_USER_ERROR );
+								$authenticated = false;
 							}
 						} else {
-							$authenticated['status'] = true;
+							$authenticated = true;
 						}
 					} else {
-						$authenticated['status'] = false;
-						$authenticated['message'] = ldap_error( $ds );
+						trigger_error( ldap_error( $ds ), E_USER_ERROR );
+						$authenticated = false;
 					}
 					ldap_unbind( $ds );
-				} else {
-					$authenticated['status'] = false;
-				}					
+				} else
+					$authenticated = false;
 				return $authenticated;
 				break;
 		}
-		return $authenticated;
+		return false;
 	}
 
-	private function loginForm($loginFailed=false, $loginMessage) {
+	private function loginForm($loginFailed=false, $loginMessage="") {
 		$err = "";
 		if( $loginFailed ) 
 			$err = '<div class="alert alert-danger" role="alert">'.$loginMessage.'</div>';

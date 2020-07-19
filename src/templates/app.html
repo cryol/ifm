@@ -34,11 +34,6 @@
 					<a id="upload" class="nav-link"><span title="{{i18n.upload}}" class="icon icon-upload" href="#"></span> <span class="d-inline d-sm-none">{{i18n.upload}}</span></a>
 				</li>
 				{{/config.upload}}
-				{{#config.uploaddir}}
-				<li class="nav-item">
-					<a id="uploadDir" class="nav-link"><span title="{{i18n.upload_folder}}" class="icon icon-upload-cloud" href="#"></span> <span class="d-inline d-sm-none">{{i18n.upload_folder}}</span></a>
-				</li>
-				{{/config.uploaddir}}
 				{{#config.createfile}}
 				<li class="nav-item">
 					<a id="createFile" class="nav-link"><span title="{{i18n.file_new}}" class="icon icon-doc-inv" href="#"></span> <span class="d-inline d-sm-none">{{i18n.file_new}}</span></a>
@@ -51,7 +46,7 @@
 				{{/config.createdir}}
 				<li class="nav-item dropdown">
 					<a class="nav-link dropdown-toggle" href="#" id="menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
-					<div class="dropdown-menu" aria-labelledby="menu">
+					<div class="dropdown-menu dropdown-menu-right" aria-labelledby="menu">
 						{{#config.remoteupload}}
 						<a class="dropdown-item" href="#" id="buttonRemoteUpload"><span class="icon icon-upload-cloud"></span> {{i18n.upload_remote}}</a>
 						{{/config.remoteupload}}

@@ -1,3 +1,4 @@
 *
-!ifm.php
-!docker-startup.sh
+!compiler.php
+!src
+!docker/docker-startup.sh
