@@ -796,7 +796,6 @@ f00bar;
 		if ($d['filename'] != "." && !$this->isFilenameValid($d['filename']))
 			throw new IFMException($this->l('invalid_filename'));
 
-		unset($zip);
 		if ($this->isAbsolutePath($this->config['tmp_dir']))
 			$dfile = $this->pathCombine($this->config['tmp_dir'], uniqid("ifm-tmp-") . ".zip"); // temporary filename
 		else
