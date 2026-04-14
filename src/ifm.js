@@ -410,7 +410,7 @@ function IFM(params) {
 							else
 								self.showCopyMoveDialog( data.clicked );
 						},
-						iconClass: "icon icon-folder-empty",
+						iconClass: "icon icon-docs",
 						isShown: function( data ) { return !!( self.config.copymove && data.clicked.name != ".." ); }
 					},
 					download: {
