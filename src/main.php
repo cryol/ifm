@@ -1169,16 +1169,26 @@ f00bar;
 	private function getTypeIcon($type) {
 		$type = strtolower($type);
 		switch ($type) {
-			case "aac": case "aiff": case "mid": case "mp3": case "wav": return 'icon icon-file-audio'; break;
-			case "ai": case "bmp": case "eps": case "tiff": case "gif": case "jpg": case "jpeg": case "png": case "psd": case "svg": case "webp": return 'icon icon-file-image'; break;
-			case "avi": case "flv": case "mp4": case "mpg": case "mkv": case "mpeg": case "webm": case "wmv": case "mov": return 'icon icon-file-video'; break;
-			case "c": case "cpp": case "css": case "dat": case "h": case "html": case "java": case "js": case "php": case "py": case "sql": case "xml": case "yml": case "json": return 'icon icon-file-code'; break;
-			case "doc": case "docx": case "odf": case "odt": case "rtf": return 'icon icon-file-word'; break;
-			case "txt": case "log": return 'icon icon-doc-text'; break;
-			case "ods": case "xls": case "xlsx": return 'icon icon-file-excel'; break;
-			case "odp": case "ppt": case "pptx": return 'icon icon-file-powerpoint'; break;
-			case "pdf": return 'icon icon-file-pdf'; break;
-			case "tgz": case "zip": case "tar": case "tgz": case "tar.gz": case "tar.xz": case "tar.bz2": case "7z": case "rar": return 'icon icon-file-archive';
+			case "aac": case "aiff": case "flac": case "m4a": case "mid": case "mp3": case "ogg": case "wav":
+				return 'icon icon-file-audio'; break;
+			case "ai": case "avif": case "bmp": case "eps": case "gif": case "ico": case "jpeg": case "jpg": case "png": case "psd": case "svg": case "tiff": case "webp":
+				return 'icon icon-file-image'; break;
+			case "avi": case "flv": case "m4v": case "mkv": case "mov": case "mp4": case "mpeg": case "mpg": case "ogv": case "webm": case "wmv":
+				return 'icon icon-file-video'; break;
+			case "c": case "cpp": case "css": case "dat": case "h": case "html": case "java": case "js": case "json": case "less": case "mjs": case "php": case "py": case "sass": case "scss": case "sh": case "sql": case "ts": case "xml": case "yaml": case "yml":
+				return 'icon icon-file-code'; break;
+			case "doc": case "docx": case "odf": case "odt": case "rtf":
+				return 'icon icon-file-word'; break;
+			case "conf": case "csv": case "ini": case "log": case "md": case "tsv": case "txt":
+				return 'icon icon-doc-text'; break;
+			case "ods": case "xls": case "xlsx":
+				return 'icon icon-file-excel'; break;
+			case "odp": case "ppt": case "pptx":
+				return 'icon icon-file-powerpoint'; break;
+			case "pdf":
+				return 'icon icon-file-pdf'; break;
+			case "7z": case "br": case "bz2": case "gz": case "iso": case "rar": case "tar": case "tar.bz2": case "tar.gz": case "tar.xz": case "tgz": case "xz": case "zip":
+				return 'icon icon-file-archive';
 			default: return 'icon icon-doc';
 		}
 	}
