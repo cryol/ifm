@@ -183,6 +183,15 @@ footer {
 /*
  * Modal related settings
  */
+.ifm-extract-option + .ifm-extract-option {
+	margin-top: .5rem;
+}
+
+.ifm-extract-option:has(input[type="radio"]:checked) {
+	outline: 2px solid #007bff;
+	border-radius: .25rem;
+}
+
 #copyMoveTree {
 	max-height: 80vh;
 	overflow: auto;
@@ -199,4 +208,21 @@ footer {
 	.modal-lg, .modal-xl {
 		max-width: 800px;
 	}
+}
+
+/*
+ * Navbar icon sizing - reduce by 20%
+ */
+.nav-link {
+	padding-top: 0.4rem !important;
+	padding-bottom: 0.2rem !important;
+}
+
+.nav-link .fa-2x {
+	font-size: 1.6em !important;
+}
+
+.nav-link .fa-stack {
+	transform: scale(0.8);
+	transform-origin: top center;
 }

@@ -32,12 +32,26 @@ body {
   padding: .75rem;
 }
 
+.form-label-group > input {
+  padding-left: 2.75rem;
+}
+
+.form-label-group .input-icon {
+  position: absolute;
+  left: .9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  z-index: 3;
+  pointer-events: none;
+}
+
 .form-label-group > label {
   position: absolute;
   top: 0;
-  left: 0;
+  left: 2rem;
   display: block;
-  width: 100%;
+  width: calc(100% - 2rem);
   margin-bottom: 0; /* Override default `<label>` margin */
   line-height: 1.5;
   color: #495057;
@@ -110,10 +124,12 @@ body {
   <form id="loginForm" class="form-signin" method="post">
     {{error}}
     <div class="form-label-group">
+      <span class="fa fa-user-circle fa-fw input-icon"></span>
       <input type="text" name="inputLogin" id="inputLogin" class="form-control" placeholder="{{i18n.username}}" required="" autofocus="">
       <label for="inputLogin">{{i18n.username}}</label>
     </div>
     <div class="form-label-group">
+      <span class="fa fa-key fa-fw input-icon"></span>
       <input type="password" name="inputPassword" id="inputPassword" class="form-control" placeholder="{{i18n.password}}" required="">
       <label for="inputPassword">{{i18n.password}}</label>
     </div>

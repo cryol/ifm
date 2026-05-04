@@ -129,13 +129,13 @@ function IFM(params) {
 			if( item.type == "dir" ) {
 				if( self.config.download && self.config.zipnload ) {
 					item.download.action = "zipnload";
-					item.download.icon = "icon icon-download-cloud";
+					item.download.icon = "icon fa fa-cloud-download";
 				}
 				item.rowclasses = "isDir";
 			} else {
 				if( self.config.download ) {
 					item.download.action = "download";
-					item.download.icon = "icon icon-download";
+					item.download.icon = "icon fa fa-download";
 				}
 				if ((item.icon.indexOf( 'file-image' ) !== -1) && (ISMOBILE == false)) {
 					item.popover = 'data-toggle="popover"';
@@ -144,7 +144,7 @@ function IFM(params) {
 					item.eaction = "extract";
 					item.button.push({
 						action: "extract",
-						icon: "icon icon-archive",
+						icon: "icon fa fa-file-archive-o",
 						title: "extract"
 					});
 				} else if(
@@ -164,7 +164,7 @@ function IFM(params) {
 					item.eaction = "edit";
 					item.button.push({
 						action: "edit",
-						icon: "icon icon-pencil",
+						icon: "icon fa fa-pencil",
 						title: "edit"
 					});
 				}
@@ -187,19 +187,19 @@ function IFM(params) {
 				if( self.config.copymove )
 					item.button.push({
 						action: "copymove",
-						icon: "icon icon-folder-open-empty",
+						icon: "icon fa fa-folder-open-o",
 						title: "copy/move"
 					});
 				if( self.config.rename )
 					item.button.push({
 						action: "rename",
-						icon: "icon icon-terminal",
+						icon: "icon fa fa-terminal",
 						title: "rename"
 					});
 				if( self.config.delete )
 					item.button.push({
 						action: "delete",
-						icon: "icon icon-trash",
+						icon: "icon fa fa-trash",
 						title: "delete"
 					});
 			}
@@ -324,7 +324,7 @@ function IFM(params) {
 						onClick: function( data ) {
 							self.editFile( data.clicked.name );
 						},
-						iconClass: "icon icon-pencil",
+						iconClass: "icon fa fa-pencil",
 						isShown: function( data ) {
 							return !!( self.config.edit && data.clicked.eaction == "edit" && !data.selected.length );
 						}
@@ -334,7 +334,7 @@ function IFM(params) {
 						onClick: function( data ) {
 							self.showExtractFileDialog( data.clicked.name );
 						},
-						iconClass: "icon icon-archive",
+						iconClass: "icon fa fa-file-archive-o",
 						isShown: function( data ) {
 							return !!( self.config.extract && data.clicked.eaction == "extract" && !data.selected.length );
 						}
@@ -344,7 +344,7 @@ function IFM(params) {
 						onClick: function( data ) {
 							self.showRenameFileDialog( data.clicked.name );
 						},
-						iconClass: "icon icon-terminal",
+						iconClass: "icon fa fa-terminal",
 						isShown: function( data ) { return !!( self.config.rename && !data.selected.length && data.clicked.name != ".." ); }
 					},
 					copylink: {
@@ -367,7 +367,7 @@ function IFM(params) {
 						onClick: function( data ) {
 							self.showExtractFileDialog( data.clicked.name );
 						},
-						iconClass: "icon icon-archive",
+						iconClass: "icon fa fa-file-archive-o",
 						isShown: function( data ) {
 							return !!( self.config.extract && data.clicked.eaction == "extract" && !data.selected.length );
 						}
@@ -377,7 +377,7 @@ function IFM(params) {
 						onClick: function( data ) {
 							self.showRenameFileDialog( data.clicked.name );
 						},
-						iconClass: "icon icon-terminal",
+						iconClass: "icon fa fa-terminal",
 						isShown: function( data ) { return !!( self.config.rename && !data.selected.length && data.clicked.name != ".." ); }
 					},
 					copylink: {
@@ -394,7 +394,7 @@ function IFM(params) {
 								self.copyToClipboard( link );
 							}
 						},
-						iconClass: "icon icon-link-ext",
+						iconClass: "icon fa fa-external-link",
 						isShown: function( data ) { return !!( !data.selected.length && data.clicked.name != ".." ); }
 					},
 					copymove: {
@@ -410,7 +410,7 @@ function IFM(params) {
 							else
 								self.showCopyMoveDialog( data.clicked );
 						},
-						iconClass: "icon icon-docs",
+						iconClass: "icon fa fa-files-o",
 						isShown: function( data ) { return !!( self.config.copymove && data.clicked.name != ".." ); }
 					},
 					download: {
@@ -426,7 +426,7 @@ function IFM(params) {
 							else
 								window.location = data.clicked.download.link;
 						},
-						iconClass: "icon icon-download",
+						iconClass: "icon fa fa-download",
 						isShown: function() { return !!self.config.download; }
 					},
 					createarchive: {
@@ -442,7 +442,7 @@ function IFM(params) {
 							else
 								self.showCreateArchiveDialog( data.clicked );
 						},
-						iconClass: "icon icon-archive",
+						iconClass: "icon fa fa-file-archive-o",
 						isShown: function( data ) { return !!( self.config.createarchive && data.clicked.name != ".." ); }
 					},
 					'delete': {
@@ -458,7 +458,7 @@ function IFM(params) {
 							else
 								self.showDeleteDialog( data.clicked );
 						},
-						iconClass: "icon icon-trash",
+						iconClass: "icon fa fa-trash",
 						isShown: function( data ) { return !!( self.config.delete && data.clicked.name != ".." ); }
 					}
 				}
@@ -843,9 +843,9 @@ function IFM(params) {
 				$( '#copyMoveTree' ).treeview({
 					data: data,
 					levels: 1,
-					expandIcon: "icon icon-plus-squared",
-					collapseIcon: "icon icon-minus-squared-alt",
-					loadingIcon: "icon icon-spin5",
+					expandIcon: "icon fa fa-plus-square",
+					collapseIcon: "icon fa fa-minus-square-o",
+					loadingIcon: "icon fa fa-spinner fa-spin",
 					lazyLoad: function( n, cb ) {
 						$.ajax({
 							url: self.api,
@@ -2082,7 +2082,7 @@ function IFM(params) {
 				let dragImage = document.createElement( 'div' );
 				dragImage.style.display = 'inline';
 				dragImage.style.padding = '10px';
-				dragImage.innerHTML = '<span class="icon icon-folder-open-empty"></span> '+self.i18n.move+' '+( data.length || data.name );
+				dragImage.innerHTML = '<span class="icon fa fa-folder-open-o"></span> '+self.i18n.move+' '+( data.length || data.name );
 				document.body.appendChild( dragImage );
 				setTimeout(function() {
 					dragImage.remove();
