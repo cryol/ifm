@@ -61,10 +61,9 @@ function IFM(params) {
 					$(this).remove();
 			})
 			.on( 'shown.bs.modal', function( e ) {
-				let formElements = $(this).find('input, button');
-				if( formElements.length > 0 ) {
-					formElements.first().focus();
-				}
+				let target = $(this).find('[autofocus]').first();
+				if( !target.length ) target = $(this).find('input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]), button').first();
+				if( target.length ) target.focus();
 			})
 			.modal(modal_options)
 			.modal('show');
@@ -503,7 +502,22 @@ function IFM(params) {
 		let content = arguments.length > 1 ? arguments[1] : "";
 		self.showModal( Mustache.render( self.templates.file, { filename: filename, i18n: self.i18n } ), { large: true } );
 
+		let isNewFile = arguments.length === 0;
+		let originalFilename = filename;
 		let form = document.getElementById( 'formFile' );
+		let filenameInput = form.querySelector( 'input[name=filename]' );
+
+		let checkFilename = function( value ) {
+			let taken = ( isNewFile || value !== originalFilename ) && self.fileCache.some( x => x.name === value );
+			filenameInput.classList.toggle( 'is-invalid', taken );
+			document.getElementById( 'filenameError' ).textContent = taken ? self.i18n.name_already_exists : '';
+			return !taken;
+		};
+
+		filenameInput.addEventListener( 'input', function() {
+			if( filenameInput.classList.contains( 'is-invalid' ) ) checkFilename( filenameInput.value );
+		});
+
 		form.addEventListener( 'keypress', function( e ) {
 			if( e.target.name == 'filename' && e.key == 'Enter' )
 				e.preventDefault();
@@ -511,12 +525,14 @@ function IFM(params) {
 		form.addEventListener( 'click', function( e ) {
 			if( e.target.id == "buttonSave" ) {
 				e.preventDefault();
-				self.saveFile( document.querySelector( '#formFile input[name=filename]' ).value, self.editor.getValue() );
+				if( !checkFilename( filenameInput.value ) ) return;
+				self.saveFile( filenameInput.value, self.editor.getValue() );
 				self.isModalClosedByButton = true;
 				self.hideModal();
 			} else if( e.target.id == "buttonSaveNotClose" ) {
 				e.preventDefault();
-				self.saveFile( document.querySelector( '#formFile input[name=filename]' ).value, self.editor.getValue() );
+				if( !checkFilename( filenameInput.value ) ) return;
+				self.saveFile( filenameInput.value, self.editor.getValue() );
 			} else if( e.target.id == "buttonClose" ) {
 				e.preventDefault();
 				self.isModalClosedByButton = true;
@@ -677,18 +693,35 @@ function IFM(params) {
 	this.showCreateDirDialog = function() {
 		self.showModal( Mustache.render( self.templates.createdir, { i18n: self.i18n } ) );
 		let form = document.forms.formCreateDir;
-		form.elements.dirname.addEventListener( 'keypress', function( e ) {
-			if(e.key == 'Enter' ) {
+		let input = form.elements.dirname;
+
+		let checkDirname = function( value ) {
+			let taken = self.fileCache.some( x => x.name === value );
+			input.classList.toggle( 'is-invalid', taken );
+			document.getElementById( 'dirnameError' ).textContent = taken ? self.i18n.name_already_exists : '';
+			return !taken;
+		};
+
+		input.addEventListener( 'input', function() {
+			if( input.classList.contains( 'is-invalid' ) ) checkDirname( input.value );
+		});
+
+		input.addEventListener( 'keypress', function( e ) {
+			if( e.key == 'Enter' ) {
 				e.preventDefault();
-				self.createDir( e.target.value );
-				self.hideModal();
+				if( checkDirname( input.value ) ) {
+					self.createDir( input.value );
+					self.hideModal();
+				}
 			}
 		});
 		form.addEventListener( 'click', function( e ) {
 			if( e.target.id == 'buttonSave' ) {
 				e.preventDefault();
-				self.createDir( form.elements.dirname.value );
-				self.hideModal();
+				if( checkDirname( form.elements.dirname.value ) ) {
+					self.createDir( form.elements.dirname.value );
+					self.hideModal();
+				}
 			} else if( e.target.id == 'buttonCancel' ) {
 				e.preventDefault();
 				self.hideModal();
@@ -950,6 +983,11 @@ function IFM(params) {
 		form.elements.extractCustomLocation.addEventListener( 'focus', function( e ) {
 			form.elements.extractTargetLocation.value = 'custom';
 		});
+		form.querySelectorAll( '.ifm-extract-location-input' ).forEach( function( input ) {
+			input.addEventListener( 'click', function() {
+				form.elements.extractTargetLocation.value = input.dataset.radioValue;
+			});
+		});
 	};
 
 	/**
@@ -988,17 +1026,94 @@ function IFM(params) {
 	this.showUploadFileDialog = function() {
 		self.showModal( Mustache.render( self.templates.uploadfile, { i18n: self.i18n } ) );
 		let form = document.forms.formUploadFile;
+		let pendingFiles = [];
+		let fileListEl = document.getElementById( 'uploadFileList' );
+		let fileLabel = form.querySelector( '.custom-file-label' );
+
+		let fileFingerprint = function( f ) {
+			return f.name + '\0' + f.size + '\0' + f.lastModified;
+		};
+
+		let syncFileInputFromPending = function() {
+			let input = form.elements.files;
+			let dt = new DataTransfer();
+			pendingFiles.forEach( function( f ) { dt.items.add( f ); } );
+			input.files = dt.files;
+		};
+
+		let refreshUploadFileList = function() {
+			fileListEl.innerHTML = '';
+			pendingFiles.forEach( function( file, index ) {
+				let li = document.createElement( 'li' );
+				li.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+				let nameSpan = document.createElement( 'span' );
+				nameSpan.className = 'text-truncate mr-2';
+				nameSpan.textContent = file.name;
+				nameSpan.title = file.name;
+				let btn = document.createElement( 'button' );
+				btn.type = 'button';
+				btn.className = 'btn btn-sm btn-link text-danger p-0 flex-shrink-0';
+				btn.setAttribute( 'data-upload-remove', String( index ) );
+				btn.setAttribute( 'title', self.i18n.delete );
+				btn.innerHTML = '<span class="icon fa fa-trash"></span>';
+				li.appendChild( nameSpan );
+				li.appendChild( btn );
+				fileListEl.appendChild( li );
+			} );
+			if( pendingFiles.length === 0 )
+				fileLabel.textContent = self.i18n.upload_file;
+			else if( pendingFiles.length === 1 )
+				fileLabel.textContent = pendingFiles[0].name;
+			else
+				fileLabel.textContent = self.i18n.upload_file + ' (' + pendingFiles.length + ')';
+			syncFileInputFromPending();
+
+			// Update visibility based on file count
+			let fileListContainer = document.getElementById( 'uploadFileListContainer' );
+			let filenameContainer = document.getElementById( 'filenameContainer' );
+
+			// 2nd group: show only when 1+ files
+			fileListContainer.hidden = pendingFiles.length < 1;
+
+			// 3rd group: show when 0-1 files, hide when 2+
+			filenameContainer.hidden = pendingFiles.length > 1;
+		};
+
 		form.elements.files.addEventListener( 'change', function( e ) {
-			if( e.target.files.length > 1 )
-				form.elements.newfilename.readOnly = true;
-			else 
-				form.elements.newfilename.readOnly = false;
-		});
+			let added = Array.prototype.slice.call( e.target.files );
+			let seen = {};
+			pendingFiles.forEach( function( f ) { seen[fileFingerprint( f )] = true; } );
+			added.forEach( function( f ) {
+				let fp = fileFingerprint( f );
+				if( ! seen[fp] ) {
+					seen[fp] = true;
+					pendingFiles.push( f );
+				}
+			} );
+			e.target.value = '';
+			refreshUploadFileList();
+		} );
+
+		fileListEl.addEventListener( 'click', function( e ) {
+			let btn = e.target.closest( '[data-upload-remove]' );
+			if( ! btn ) return;
+			e.preventDefault();
+			let i = parseInt( btn.getAttribute( 'data-upload-remove' ), 10 );
+			if( i >= 0 && i < pendingFiles.length ) {
+				pendingFiles.splice( i, 1 );
+				refreshUploadFileList();
+			}
+		} );
+
 		form.addEventListener( 'click', function( e ) {
 			if( e.target.id == 'buttonUpload' ) {
 				e.preventDefault();
 				let newfilename = form.elements.newfilename.value;
-				let files = Array.prototype.slice.call( form.elements.files.files );
+				let files = pendingFiles.slice();
+				if( files.length === 0 ) {
+					self.showMessage( self.i18n.upload_no_file, 'e' );
+					return;
+				}
 				let existing_files;
 				if (files.length > 1)
 					existing_files = files.map(x => x.name).filter(item => self.fileCache.map(x => x.name).includes(item));
@@ -1117,7 +1232,19 @@ function IFM(params) {
 		self.showModal( Mustache.render( self.templates.remoteupload, { i18n: self.i18n } ) );
 		let form = document.forms.formRemoteUpload;
 		let urlChangeHandler = function( e ) {
-			form.elements.filename.value = e.target.value.substr( e.target.value.lastIndexOf( '/' ) + 1 );
+			let basename = e.target.value.split( '/' ).pop().split( '?' )[0].split( '#' )[0];
+			if( !basename ) return;
+			let existingNames = self.fileCache.map( x => x.name );
+			let finalName = basename;
+			let counter = 1;
+			let dotIdx = basename.lastIndexOf( '.' );
+			while( existingNames.includes( finalName ) ) {
+				finalName = dotIdx > 0
+					? basename.substr( 0, dotIdx ) + ' (' + counter + ')' + basename.substr( dotIdx )
+					: basename + ' (' + counter + ')';
+				counter++;
+			}
+			form.elements.filename.value = finalName;
 		};
 		form.elements.url.addEventListener( 'keypress', self.preventEnter );
 		form.elements.url.addEventListener( 'change', urlChangeHandler );
@@ -1174,11 +1301,22 @@ function IFM(params) {
 	this.showAjaxRequestDialog = function() {
 		self.showModal( Mustache.render( self.templates.ajaxrequest, { i18n: self.i18n } ) );
 		let form = document.forms.formAjaxRequest;
+		let dataContainer = document.getElementById( 'ajaxDataContainer' );
+
+		let updateDataVisibility = function() {
+			dataContainer.hidden = form.elements.arMethod.value !== 'POST';
+		};
+		Array.from( form.elements.arMethod ).forEach( function( r ) {
+			r.addEventListener( 'change', updateDataVisibility );
+		});
+		updateDataVisibility();
+
 		form.elements.ajaxurl.addEventListener( 'keypress', self.preventEnter );
 		form.addEventListener( 'click', function( e ) {
 			if( e.target.id == 'buttonRequest' ) {
 				e.preventDefault();
-				self.ajaxRequest( form.elements.ajaxurl.value, form.elements.ajaxdata.value.replace( /\n/g, '&' ), form.elements.arMethod.value );
+				let data = form.elements.arMethod.value === 'POST' ? form.elements.ajaxdata.value.replace( /\n/g, '&' ) : '';
+				self.ajaxRequest( form.elements.ajaxurl.value, data, form.elements.arMethod.value );
 			} else if( e.target.id == 'buttonClose' ) {
 				e.preventDefault();
 				self.hideModal();
@@ -1195,8 +1333,21 @@ function IFM(params) {
 			cache	: false,
 			data	: data,
 			type    : method,
-			success	: function( response ) { document.getElementById( 'ajaxresponse' ).innerText = response; },
-			error	: function(e) { self.showMessage("Error: "+e, "e"); self.log(e); }
+			success	: function( response, textStatus, jqXHR ) {
+				document.getElementById( 'ajaxresponse' ).innerText = response;
+				let statusEl = document.getElementById( 'ajaxStatusCode' );
+				statusEl.textContent = jqXHR.status;
+				statusEl.className = 'badge badge-success';
+				statusEl.hidden = false;
+			},
+			error	: function( jqXHR ) {
+				document.getElementById( 'ajaxresponse' ).innerText = jqXHR.responseText || '';
+				let statusEl = document.getElementById( 'ajaxStatusCode' );
+				statusEl.textContent = jqXHR.status;
+				statusEl.className = 'badge badge-danger';
+				statusEl.hidden = false;
+				self.log( jqXHR );
+			}
 		});
 	};
 
@@ -1229,37 +1380,45 @@ function IFM(params) {
 
 		updateResults( self.search.data );
 
+		let performSearch = function( pattern ) {
+			if( !pattern || pattern.trim() === '' ) return;
+			document.getElementById( 'searchResults' ).tBodies[0].innerHTML = '<tr><td style="text-align:center;"><span class="icon fa fa-spinner fa-spin"></span></td></tr>';
+			self.search.lastSearch = pattern;
+			$.ajax({
+				url: self.api,
+				type: "POST",
+				data: {
+					api: "searchItems",
+					dir: self.currentDir,
+					pattern: pattern
+				},
+				dataType: "json",
+				success: function( data ) {
+					if( data.status == 'ERROR' ) {
+						self.hideModal();
+						self.showMessage( data.message, "e" );
+					} else {
+						data.forEach( function(e) {
+							e.folder = ( e.name.substr( 0, e.name.lastIndexOf( '/' ) ) ) ? e.name.substr( 0, e.name.lastIndexOf( '/' ) ) : '/';
+							e.linkname = e.name.substr( e.name.lastIndexOf( '/' ) + 1 );
+						});
+						self.search.data = data;
+						if( self.search.data ) self.search.data.currentDir = self.currentDir;
+						updateResults( data );
+					}
+				}
+			});
+		};
+
 		document.getElementById( 'searchPattern' ).addEventListener( 'keypress', function( e ) {
 			if( e.key == 'Enter' ) {
 				e.preventDefault();
-				if( e.target.value.trim() === '' ) return;
-				document.getElementById( 'searchResults' ).tBodies[0].innerHTML = '<tr><td style="text-align:center;"><span class="icon icon-spin5 animate-spin"></span></td></tr>';
-				self.search.lastSearch = e.target.value;
-				$.ajax({
-					url: self.api,
-					type: "POST",
-					data: {
-						api: "searchItems",
-						dir: self.currentDir,
-						pattern: e.target.value
-					},
-					dataType: "json",
-					success: function( data ) {
-						if( data.status == 'ERROR' ) {
-							self.hideModal();
-							self.showMessage( data.message, "e" );
-						} else {
-							data.forEach( function(e) {
-								e.folder = ( e.name.substr( 0, e.name.lastIndexOf( '/' ) ) ) ? e.name.substr( 0, e.name.lastIndexOf( '/' ) ) : '/';
-								e.linkname = e.name.substr( e.name.lastIndexOf( '/' ) + 1 );
-							});
-							self.search.data = data;
-							if( self.search.data ) self.search.data.currentDir = self.currentDir;
-							updateResults( data );
-						}
-					}
-				});
+				performSearch( e.target.value );
 			}
+		});
+
+		document.getElementById( 'buttonSearch' ).addEventListener( 'click', function() {
+			performSearch( document.getElementById( 'searchPattern' ).value );
 		});
 	};
 
