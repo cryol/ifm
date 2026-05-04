@@ -12,6 +12,7 @@ RUN apk add --no-cache \
     libcap-utils \
     libzip-dev \
     openldap-dev \
+    zip \
     sudo
 
 RUN docker-php-ext-install \
@@ -37,7 +38,7 @@ RUN rm -rf /var/www/html && \
     ln -s /var/www /usr/local/share/webapps/ifm/www && \
     mkdir -p /usr/src/ifm
 COPY / /usr/src/ifm/
-RUN /usr/src/ifm/compiler.php --languages=all && \
+RUN /usr/src/ifm/compiler.php  --languages=all && \
     cp /usr/src/ifm/dist/ifm.php /usr/local/share/webapps/ifm/index.php && \
     cp /usr/src/ifm/docker/php.ini /usr/local/share/webapps/ifm/ && \
     rm -rf /usr/src/ifm
