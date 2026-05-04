@@ -36,14 +36,14 @@ class IFMArchive {
 					if (is_file($filePath)) {
 						if (!is_callable($exclude_callback) || $exclude_callback($f)) {
 							$archive->addFile($filePath, substr($filePath, $offset));
-							// Set STORE compression for already compressed formats (ZipArchive only)
-							if ($archive instanceof ZipArchive) {
+							// Set STORE compression for already compressed formats (\ZipArchive only)
+							if ($archive instanceof \ZipArchive) {
 								$ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
 								$nameInArchive = substr($filePath, $offset);
 								if (!empty($noCompressExtensions) && in_array($ext, $noCompressExtensions)) {
-									$archive->setCompressionName($nameInArchive, ZipArchive::CM_STORE, 0);
+									$archive->setCompressionName($nameInArchive, \ZipArchive::CM_STORE, 0);
 								} else {
-									$archive->setCompressionName($nameInArchive, ZipArchive::CM_DEFLATE, 6);
+									$archive->setCompressionName($nameInArchive, \ZipArchive::CM_DEFLATE, 6);
 								}
 							}
 						}
@@ -89,7 +89,7 @@ class IFMArchive {
 		}
 
 		$cmd = sprintf(
-			'cd %s && %s -6 -r -q %s%s %s 2>/dev/null',
+			'cd %s && %s -6 -r -q %s%s %s >/dev/null 2>&1',
 			escapeshellarg($sourceDir),
 			$zipCmd,
 			$noCompressFlag,
@@ -97,7 +97,7 @@ class IFMArchive {
 			escapeshellarg($sourceName)
 		);
 
-		exec($cmd, $output, $returnCode);
+		system($cmd, $returnCode);
 		chdir($currentDir);
 
 		return $returnCode === 0 && file_exists($archivePath);
@@ -134,8 +134,8 @@ class IFMArchive {
 			}
 		}
 		
-		// Fallback to PHP ZipArchive
-		$a = new ZipArchive();
+		// Fallback to PHP \ZipArchive
+		$a = new \ZipArchive();
 		$a->open($archivename, ZIPARCHIVE::CREATE);
 
 		foreach ($filenames as $f)
@@ -151,9 +151,9 @@ class IFMArchive {
 					$a->addFile($f, $nameInArchive);
 					$ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
 					if (!empty($noCompressExtensions) && in_array($ext, $noCompressExtensions)) {
-						$a->setCompressionName($nameInArchive, ZipArchive::CM_STORE, 0);
+						$a->setCompressionName($nameInArchive, \ZipArchive::CM_STORE, 0);
 					} else {
-						$a->setCompressionName($nameInArchive, ZipArchive::CM_DEFLATE, 6);
+						$a->setCompressionName($nameInArchive, \ZipArchive::CM_DEFLATE, 6);
 					}
 				}
 			}
@@ -172,7 +172,7 @@ class IFMArchive {
 		if (!file_exists($file)) {
 			return false;
 		}
-		$zip = new ZipArchive;
+		$zip = new \ZipArchive;
 		$res = $zip->open($file);
 		if ($res === true) {
 			$zip->extractTo($destination);
